@@ -17,6 +17,8 @@ enum Commands {
         queue_url: String,
         #[arg(long)]
         destination_file_path: String,
+        #[arg(long)]
+        max_concurrency: Option<u16>,
         #[arg(value_enum, long)]
         file_type: FileTypeParam,
     },
@@ -43,13 +45,15 @@ async fn main() {
     let cli = Cli::parse();
     let sqs_client = clients::get_sqs_client().await;
 
+   
+
     // You can check for the existence of subcommands, and if found use their
     // matches just as you would the top level cmd
     match &cli.command {
         
-        Commands::SqsDumpMessages { queue_url, destination_file_path, file_type } => {
+        Commands::SqsDumpMessages { queue_url, destination_file_path, max_concurrency, file_type } => {
             let file_type_output = FileTypeOutput::from(*file_type);
-            let sqs_job = SqsJob::new(queue_url, destination_file_path, &file_type_output, sqs_client);
+            let sqs_job = SqsJob::new(queue_url.to_string(), destination_file_path.to_string(), file_type_output, sqs_client, *max_concurrency);
 
             sqs_job.dump_messages().await.unwrap();
 
